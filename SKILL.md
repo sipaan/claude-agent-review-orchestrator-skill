@@ -68,6 +68,20 @@ You don't always know the rules. The codebase does. Force the agent to consult t
 
 When you're wrong about a rule, retract publicly (see principle 7).
 
+#### 2a. Pattern-mirror prescriptions carry hidden assumptions
+
+A subtler failure mode of "prescribing" is when you direct the implementing agent to **mirror an existing pattern** ("for photos, mirror PR #N's video carve-out"). This *looks* like steering because you're pointing at code, but it's still a prescription, and it carries a hidden assumption: that the conditions which made the original pattern correct also apply in the new context.
+
+Patterns work because of their underlying invariants, not their syntax. If those invariants don't hold for the new case, the literal mirror produces a half-fix that looks correct but is bug-equivalent to the original problem.
+
+**Concrete example.** Orchestrator says: *"For photos using `write-sidecar`, mirror PR #70's video carve-out — update `sidecarDateTaken` in the post-repair refresh loop."* Implementing agent traces the repair engine and reports back: *"The video pattern works because videos have no EXIF cache entry, so `needsExifRepair`'s fallback chain reaches `sidecarDateTaken`. Photos on R2 have valid EXIF, so the fallback never engages — updating only `sidecarDateTaken` leaves `repairDate` stale, and the engine still fires the repair on next render. The fix needs to update both `sidecarDateTaken` AND `repairDate`."*
+
+The orchestrator's correct response is **approve the deviation, not enforce the literal mirror**. If your prescribed pattern carried an assumption that doesn't hold in the new case, the agent's catch is the verification-orchestrator pattern doing exactly its job. Acknowledge the catch in your reply (this reinforces the discipline), explain why your original instruction was incomplete (so the agent and any future readers understand the correction), and approve the broader scope.
+
+**Agent pushback on a prescribed pattern is a positive signal, not friction.** An agent that mirrors syntax and ships a half-fix is following instructions but missing the point. Welcome the trace, welcome the deviation, welcome the broader-than-spec scope when the reasoning is sound.
+
+The general lesson: even when you cite specific code as the pattern to mirror, you may still be prescribing too much. The agent's plan-phase question — *"do you accept this scope expansion?"* — is the right place for this conversation. Plan phase is cheap to revise; post-implementation revision is expensive. Encourage the agent to surface deviations during planning, not after.
+
 ### 3. Phased verification, cheap to expensive
 
 Order verification phases by cost. Cheap signals first; expensive signals only after the cheap ones pass. If a cheap check fails, you never burn time on the expensive one.
@@ -179,12 +193,14 @@ When the agent's claim is "the migration didn't break anything", a 5-minute brow
 |---|---|---|
 | Trusting agent self-report | "All green!" without raw output | Demand raw output explicitly |
 | Prescribing rules from memory | Telling agent rules instead of pointing at code | Cite file paths, let agent read them |
+| Pattern-mirror prescription with hidden assumption | "Mirror X" produces a half-fix because X's correctness depended on conditions not present in the new case | Welcome agent pushback; trace the original pattern's invariants; approve the corrected scope (see principle 2a) |
 | Multi-phase dump | Sending all 5 phases at once | Send one, wait, send next |
 | Shallow plan acceptance | Agent's plan addresses symptoms; you approve | Look for symptom-vs-root-cause; push back |
 | Biased research delegation | Naming libraries in research prompts | Phrase as problem, not solution |
 | Doubling down on assumptions | User corrects you; you defend | Retract publicly, recalibrate |
 | Acting on stale memories | Citing file:line from memory without re-checking | Verify against current code before claiming |
 | Premature merge celebration | "Done!" before live smoke test | Static checks are necessary, not sufficient |
+| Enforcing literal-mirror over agent's traced correction | Agent says "the literal mirror won't work for case Y, here's the corrected fix"; orchestrator insists on the original prescription anyway | Agent pushback during planning IS the verification working — approve the broader scope when the trace is sound |
 
 ## A note on tone
 
